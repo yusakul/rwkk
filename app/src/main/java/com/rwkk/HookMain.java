@@ -26,10 +26,7 @@ public class HookMain implements IXposedHookLoadPackage, IXposedHookZygoteInit {
     @Override
     public void handleLoadPackage(final LoadPackageParam loadPackageParam) throws Throwable {
 
-        if(packagename!=null && packagename.equals("com.rwkk"))
-        {
-            com.rwkk.hooks.HttpHook.initAllHooks(loadPackageParam);
-        }
+
 
         if (loadPackageParam.packageName.equals("com.rwkk")) {    //过滤包名
             //XposedBridge.log("find object" );
@@ -43,10 +40,15 @@ public class HookMain implements IXposedHookLoadPackage, IXposedHookZygoteInit {
             });
         }
 
-        if(packagename==null)
+        if(loadPackageParam.packageName==null)
         {
+            XposedBridge.log("packagename null");
             return;
         }
+
+        XposedBridge.log("111111");
+        //com.rwkk.hooks.HttpHook.initAllHooks(loadPackageParam);
+        com.rwkk.hooks.Contacts.initAllHooks(loadPackageParam);
 
     }
 

@@ -6,6 +6,7 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.view.Menu;
@@ -16,16 +17,20 @@ import android.widget.ListView;
 import android.widget.Toast;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import android.support.v7.app.AppCompatActivity;
+
+import static com.rwkk.HookMain.packagename;
 
 
 public class AppListActivity extends AppCompatActivity {
     private ArrayList<PackageInfo> apps;
     private SharedPreferences mPrefs;
+    private SharedPreferences mPrefs_permission;
     ContentResolver resolver;
     public static String KEY_PACKAGE = "package";
-
+    public  static final String strPrefs = "rwkkPrefs";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -34,24 +39,66 @@ public class AppListActivity extends AppCompatActivity {
 
         resolver = this.getContentResolver();
 
+        mPrefs_permission = getSharedPreferences("mPrefs_permission", Context.MODE_MULTI_PROCESS);
 
-        mPrefs = getSharedPreferences("rwkkPrefs", Context.MODE_MULTI_PROCESS);
+        mPrefs = getSharedPreferences(strPrefs, Context.MODE_MULTI_PROCESS);
         ListView appList= loadListView();
 
         appList.setOnItemClickListener(new AdapterView.OnItemClickListener()
         {
             public void onItemClick(AdapterView<?> arg0, View v,int position, long arg3)
             {
-                PackageInfo app = apps.get(position);
-                Toast.makeText(getApplicationContext(), "Bypass applied to " + app.getAppName(), Toast.LENGTH_LONG).show();
+                loadListView();
 
+                PackageInfo app = apps.get(position);
+               // Toast.makeText(getApplicationContext(), "Bypass applied to " + app.getAppName(), Toast.LENGTH_LONG).show();
+
+
+                //保存选择的包名
+                clear(getApplicationContext());
                 SharedPreferences.Editor edit = mPrefs.edit();
                 edit.putString("package",app.getPckName());
                 edit.apply();
 
+                //传给一个函数，用来被hook获取点击的包名
                 getAppList(app.getPckName());
 
-                loadListView();
+
+
+
+
+
+
+                //获取选择应用的权限并保存
+                HashMap<String, String[]> map = new HashMap<String, String[]>();
+
+                android.content.pm.PackageInfo packageInfo = null;
+                try {
+                    packageInfo = getPackageManager().getPackageInfo(app.getPckName(), PackageManager.GET_PERMISSIONS);
+                } catch (PackageManager.NameNotFoundException e) {
+                    e.printStackTrace();
+                }
+                if(packageInfo==null) {
+                    Toast.makeText(getApplicationContext(), "packageInfo null", Toast.LENGTH_LONG).show();
+                    return;
+                }
+                //String[] permission = new String[10];
+                String permission[] = packageInfo.requestedPermissions;//获取权限列表
+
+                if(permission==null) {
+                    Toast.makeText(getApplicationContext(), "permission null", Toast.LENGTH_LONG).show();
+                    return;
+                }
+                map.put(app.getPckName(), permission);
+                StringBuilder sb=new StringBuilder();
+                for (int i = 0; i < permission.length; i++) {
+                    sb.append("权限"+permission[i]+"\n");
+                    SharedPreferences.Editor edit2 = mPrefs.edit();
+                    edit2.putString(i + ":permission" ,permission[i]);
+                    edit2.apply();
+                }
+
+
             }
         });
     }
@@ -127,6 +174,14 @@ public class AppListActivity extends AppCompatActivity {
 
     private void getAppList(String str) {
 
+    }
+
+    public static void clear(Context context) {
+        SharedPreferences preferences = context.getSharedPreferences(strPrefs, Context.MODE_MULTI_PROCESS);
+        SharedPreferences.Editor editor = preferences.edit();
+        editor.clear();
+
+        editor.commit();
     }
 
 }

@@ -28,15 +28,17 @@ import static de.robv.android.xposed.XposedHelpers.findAndHookMethod;
 import static de.robv.android.xposed.XposedHelpers.findClass;
 import static de.robv.android.xposed.XposedHelpers.getObjectField;
 
+import java.net.HttpURLConnection;
+
 /**
  * Created by acpm on 14/02/16.
  */
 public class HttpHook extends XC_MethodHook {
 
-    public static final String TAG = "k1k_Http:";
+    public static final String TAG = "rwkk_Http:";
 
     public static void initAllHooks(final XC_LoadPackage.LoadPackageParam loadPackageParam) {
-
+        XposedBridge.log("22222");
         try {
             final Class<?> httpUrlConnection = findClass("java.net.HttpURLConnection", loadPackageParam.classLoader);
             hookAllConstructors(httpUrlConnection, new XC_MethodHook() {
